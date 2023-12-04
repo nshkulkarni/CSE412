@@ -9,12 +9,12 @@ const port = 4000;
 app.use(express.json());
 app.use(cors());
 
-app.use(express.static(path.join(__dirname, '../client/build')));
+// app.use(express.static(path.join(__dirname, '../client/build')));
 
-// Handle other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-});
+// // Handle other routes
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+// });
 
 
 // Endpoint for creating a new user
@@ -75,16 +75,23 @@ app.get("/api/users", async (req, res) => {
     }
 });
 
-app.get("/api/songs", async (req, res) => {
-    const title = req.query.title;
+app.get("/api/song", async (req, res) => {
+    try{
+        const { title } = req.query;
 
-    try {
-        const result = await pool.query('SELECT * FROM songs WHERE title ILIKE $1', [`%${title}%`]);
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        //
+
+        const song = await pool.query("SELECT * FROM song WHERE s_title ILIKE $1", 
+        [`%${ title }%`]
+        );
+        res.json(song.rows);
+    } catch (err) {
+        console.error(err.message)
     }
 });
+
+// Example endpoint for song search
+// query parameters- being able to send data within URL
+
 
 app.listen(port, () => console.log(`Server is running on http://localhost:${port}`));
