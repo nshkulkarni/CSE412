@@ -1,33 +1,92 @@
 // Home.js
-import React, { useState } from 'react';
-import SearchInput from './SearchInput';
+import React, { Fragment, useState } from 'react';
+import Playlist from './Playlist'; // Import Playlist component
 
-function Home({ songs }) {
-    const [searchResults, setSearchResults] = useState([]);
 
-    const handleSearch = (query) => {
-        // Implement the logic to search for songs based on the query
-        // Update the searchResults state with the search results
-        // For example, you might fetch data from an API endpoint with the search query
+function Home() {
+  const [title, setTitle] = useState("");
+  const [song, setSong] = useState([]);
+  const onSubmitForm = async (e) => {
+    e.preventDefault()
+    try {
+      const response = await fetch(`http://localhost:4000/api/song/?title=${title}`);
 
-        // Placeholder logic:
-        setSearchResults(songs.filter((song) => song.title.includes(query)));
-    };
+      const parseResponse = await response.json();
 
-    return (
-        <div>
-            <h1>Song List</h1>
-            <SearchInput onSearch={handleSearch} />
+      setSong(parseResponse);
+    } catch (err) {
+      console.error(err.message)
+    }
+  }
 
-            <ul>
-                {searchResults.map((song) => (
-                    <li key={song.id}>
-                        <strong>Title:</strong> {song.title}, <strong>Artist:</strong> {song.artist}
-                    </li>
-                ))}
-            </ul>
+  const handleAddToPlaylist = async (playlistId, songId) => {
+    // Make a request to the backend to add the song to the selected playlist
+    try {
+      const response = await fetch(`http://localhost:4000/api/playlists/${playlistId}/add-song`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ songId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log(data);
+        // Optionally, update the UI to reflect the change
+      } else {
+        console.error(data.error);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  return (
+    <Fragment>
+      <div>
+      <div style={{ display: 'flex' }}>
+        <div style={{ flex: 1 }}>
+        <h1>Search</h1>
+        <form onSubmit={onSubmitForm}>
+          <input
+            type="text"
+            name="title"
+            placeholder="Enter song title"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+          />
+          <button>Submit</button>
+        </form>
+        <table>
+          <thead>
+            <tr>
+            <th style={{ textAlign: 'left' }}>Song Title</th>
+            <th style={{ textAlign: 'left' }}>Artist Name</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              song.map(s => (
+                <tr key={s.s_serial}>
+                  <td>{s.s_title}</td>
+                  <td>{s.a_name}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
         </div>
-    );
+        <div style={{ flex: 1 }}>
+          {/* Right side - Playlist */}
+          <Playlist />
+        </div>
+      </div>
+      </div>
+    </Fragment>
+  );
+
 }
 
 export default Home;
