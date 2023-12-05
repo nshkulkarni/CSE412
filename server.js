@@ -127,9 +127,11 @@ app.post("/api/playlists/:playlistId/add-song", async (req, res) => {
     const playlistId = req.params.playlistId;
     const songId = req.body.songId;
 
+    console.log("Received request to add song to playlist. Playlist ID:", playlistId, "Song ID:", songId);
+
     const insertSMT = `
-        INSERT INTO "Contains" (P_ID, S_ID)
-        VALUES (${playlistId}, '${songId}')
+        INSERT INTO playlist_songs (s_id, p_id)
+        VALUES ('${songId}', ${playlistId})
         ON CONFLICT DO NOTHING
         RETURNING *;
     `;
@@ -144,10 +146,28 @@ app.post("/api/playlists/:playlistId/add-song", async (req, res) => {
             res.status(400).json({ error: `Song '${songId}' is already in playlist '${playlistId}'.` });
         }
     } catch (err) {
-        console.error(err);
+        console.error(err);  // Log the error
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+// Endpoint for fetching songs in a playlist
+app.get("/api/playlists/:playlistId/songs", async (req, res) => {
+    const playlistId = req.params.playlistId;
+
+    try {
+        const result = await pool.query(
+            'SELECT s.* FROM playlist_songs c JOIN song s ON c.s_id = s.s_id WHERE c.p_id = $1',
+            [playlistId]
+        );
+
+        res.json(result.rows);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 
 
 
